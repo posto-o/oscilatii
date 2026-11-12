@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oscilații perpendiculare pe resorturi</title>
+<style>
+:root{
+--bg:#E8EDF0;
+--panel:#F8FAFB;
+--ink:#16202B;
+--muted:#5A6876;
+--line:#C9D3DA;
+--blue:#1F5FA8;
+--amber:#C9731B;
+--teal:#0E3B43;
+color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+:root{
+--bg:#0F1519;
+--panel:#182027;
+--ink:#E6ECF0;
+--muted:#9AA9B5;
+--line:#2B3842;
+--blue:#5FA3E8;
+--amber:#F0A04B;
+--teal:#9FD3DB;
+color-scheme: dark;
+}
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+background:var(--bg);
+color:var(--ink);
+font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+line-height:1.5;
+padding:20px;
+}
+.wrap{max-width:1080px;margin:0 auto}
+h1{
+font-family:"Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+font-weight:600;
+font-size:clamp(1.5rem,3.4vw,2.1rem);
+letter-spacing:-0.01em;
+margin:0 0 4px;
+}
+.lede{margin:0 0 18px;color:var(--muted);max-width:62ch}
+.layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(280px,1fr);gap:18px;align-items:start}
+@media (max-width:820px){.layout{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+canvas{display:block;width:100%;height:auto;border-radius:6px}
+#stage{aspect-ratio:1/1}
+#strip{aspect-ratio:600/150;margin-top:10px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin:10px 2px 0;font-size:.88rem;color:var(--muted)}
+.sw{display:inline-block;width:22px;height:0;border-top:3px solid;vertical-align:middle;margin-right:6px}
+.ctl{margin-bottom:14px}
+.ctl label{display:flex;justify-content:space-between;font-weight:600;font-size:.95rem;margin-bottom:4px}
+.ctl output{font-weight:400;color:var(--muted);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--blue)}
+.presets{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+button{
+font:inherit;font-size:.92rem;
+padding:6px 12px;border-radius:6px;
+border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;
+}
+button:hover{border-color:var(--blue)}
+button.primary{background:var(--teal);color:var(--panel);border-color:var(--teal)}
+:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.result{
+border-top:1px solid var(--line);padding-top:12px;margin-top:4px;
+font-family:"Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+}
+.result .kind{font-size:1.15rem;font-weight:600;margin:0 0 6px}
+.result p{margin:4px 0;font-size:1rem}
+.eq{font-style:italic;color:var(--ink)}
+.note{font-family:system-ui,sans-serif;font-size:.85rem;color:var(--muted);margin-top:10px}
+label.chk{display:flex;gap:8px;align-items:center;font-size:.92rem;margin-bottom:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Oscilații perpendiculare pe resorturi</h1>
+<p class="lede">Un punct material este prins de patru resorturi identice: două pe direcția Ox și două pe direcția Oy. Mișcările pe cele două axe au aceeași pulsație, iar diferența de fază Δφ dintre ele decide forma traiectoriei.</p>
+
+<div class="layout">
+<div class="card">
+<canvas id="stage" aria-label="Punct material între patru resorturi perpendiculare, cu urma traiectoriei"></canvas>
+<canvas id="strip" aria-label="Graficele x(t) și y(t)"></canvas>
+<div class="legend">
+<span><i class="sw" style="border-color:var(--blue)"></i>resorturi pe Ox: x(t)</span>
+<span><i class="sw" style="border-color:var(--amber)"></i>resorturi pe Oy: y(t)</span>
+<span><i class="sw" style="border-color:var(--ink);border-top-style:dashed"></i>traiectoria completă</span>
+</div>
+</div>
+
+<div class="card">
+<div class="row">
+<button id="play" class="primary" type="button">Pauză</button>
+<button id="restart" type="button">De la început</button>
+</div>
+
+<div class="ctl">
+<label for="a1">Amplitudine pe Ox, A₁ <output id="a1o"></output></label>
+<input id="a1" type="range" min="0.2" max="1" step="0.05" value="0.8">
+</div>
+<div class="ctl">
+<label for="a2">Amplitudine pe Oy, A₂ <output id="a2o"></output></label>
+<input id="a2" type="range" min="0.2" max="1" step="0.05" value="0.6">
+</div>
+<div class="ctl">
+<label for="dp">Diferența de fază, Δφ <output id="dpo"></output></label>
+<input id="dp" type="range" min="0" max="360" step="1" value="90">
+<div class="presets" role="group" aria-label="Valori uzuale pentru Δφ">
+<button type="button" data-deg="0">0</button>
+<button type="button" data-deg="90">π/2</button>
+<button type="button" data-deg="180">π</button>
+<button type="button" data-deg="270">3π/2</button>
+</div>
+</div>
+<div class="ctl">
+<label for="sp">Viteza animației <output id="spo"></output></label>
+<input id="sp" type="range" min="0.25" max="2" step="0.25" value="1">
+</div>
+<label class="chk"><input id="guide" type="checkbox" checked> Arată traiectoria completă</label>
+
+<div class="result" aria-live="polite">
+<p class="kind" id="kind"></p>
+<p class="eq" id="eqxy"></p>
+<p class="eq" id="eq5"></p>
+<p class="note">Resorturile au aceeași constantă elastică pe ambele axe, deci pulsația este aceeași: ω = √(2k/m). Diferența de fază vine din condițiile inițiale: momentul în care elibererezi punctul pe fiecare axă.</p>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+(function(){
+const dpr = Math.min(window.devicePixelRatio || 1, 2);
+const stage = document.getElementById('stage');
+const strip = document.getElementById('strip');
+const SW = 600, SH = 600, GW = 600, GH = 150;
+stage.width = SW*dpr; stage.height = SH*dpr;
+strip.width = GW*dpr; strip.height = GH*dpr;
+const g = stage.getContext('2d');
+const s = strip.getContext('2d');
+g.scale(dpr,dpr); s.scale(dpr,dpr);
+
+const CX = 300, CY = 300, WALL = 262, R = 17, SC = 112;
+const W = Math.PI, T = 2; // omega = pi rad/s -> perioada T = 2 s
+const state = {A1:0.8, A2:0.6, deg:90, speed:1, playing:true, t:0, guide:true};
+
+const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+if (reduce) state.playing = false;
+
+function css(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+let C = {};
+function readColors(){
+C = {bg:css('--panel'), ink:css('--ink'), muted:css('--muted'), line:css('--line'),
+blue:css('--blue'), amber:css('--amber'), teal:css('--teal')};
+}
+readColors();
+if (window.matchMedia) {
+const mq = window.matchMedia('(prefers-color-scheme: dark)');
+if (mq.addEventListener) mq.addEventListener('change', readColors);
+}
+
+function pos(t){
+const ph = state.deg*Math.PI/180;
+return { x: state.A1*Math.sin(W*t), y: state.A2*Math.sin(W*t + ph) };
+}
+
+function hexToRgba(col, a){
+// accepts #rrggbb
+const m = /^#([0-9a-f]{6})$/i.exec(col);
+if(!m) return col;
+const n = parseInt(m[1],16);
+return 'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a+')';
+}
+
+// resort orizontal sau vertical: de la (x1,y1) la (x2,y2)
+function spring(ctx, x1,y1,x2,y2, color){
+const dx=x2-x1, dy=y2-y1, len=Math.hypot(dx,dy);
+if(len<2) return;
+const ux=dx/len, uy=dy/len, nx=-uy, ny=ux;
+const end = Math.min(16, len*0.18);
+const N = 18, amp = 10;
+ctx.beginPath();
+ctx.moveTo(x1,y1);
+ctx.lineTo(x1+ux*end, y1+uy*end);
+const mid = len/2 - end;
+for(let i=1;i<N;i++){
+const d = end + mid*i/N;
+const sgn = (i%2) ? 1 : -1;
+ctx.lineTo(x1+ux*d+nx*amp*sgn, y1+uy*d+ny*amp*sgn);
+}
+ctx.lineTo(x2-ux*end, y2-uy*end);
+ctx.lineTo(x2,y2);
+ctx.lineWidth = 2.6; ctx.strokeStyle = color; ctx.lineJoin='round'; ctx.lineCap='round';
+ctx.stroke();
+}
+function drawStage(){
+g.clearRect(0,0,SW,SH);
+const p = pos(state.t);
+const px = CX + p.x*SC, py = CY - p.y*SC;
+// axe fine
+g.lineWidth=1; g.strokeStyle=C.line;
+g.beginPath(); g.moveTo(CX-WALL,CY); g.lineTo(CX+WALL,CY); g.moveTo(CX,CY-WALL); g.lineTo(CX,CY+WALL); g.stroke();
+
+// dreptunghiul 2A1 x 2A2
+g.setLineDash([5,5]); g.strokeStyle=C.muted; g.globalAlpha=.7;
+g.strokeRect(CX-state.A1*SC, CY-state.A2*SC, 2*state.A1*SC, 2*state.A2*SC);
+g.setLineDash([]); g.globalAlpha=1;
+
+// traiectoria completa (ghid)
+if(state.guide){
+g.setLineDash([2,6]); g.lineWidth=2; g.strokeStyle=hexToRgba(C.ink.length===7?C.ink:'#16202B',0.45);
+g.beginPath();
+for(let i=0;i<=240;i++){
+const q=pos(T*i/240);
+const X=CX+q.x*SC, Y=CY-q.y*SC;
+if(i===0) g.moveTo(X,Y); else g.lineTo(X,Y);
+}
+g.stroke(); g.setLineDash([]);
+}
+
+// pereti (sine) si carucioare
+g.lineWidth=5; g.lineCap='round';
+g.strokeStyle=C.line;
+g.beginPath(); g.moveTo(CX-WALL,CY-WALL); g.lineTo(CX-WALL,CY+WALL);
+g.moveTo(CX+WALL,CY-WALL); g.lineTo(CX+WALL,CY+WALL);
+g.moveTo(CX-WALL,CY-WALL); g.lineTo(CX+WALL,CY-WALL);
+g.moveTo(CX-WALL,CY+WALL); g.lineTo(CX+WALL,CY+WALL); g.stroke();
+// carucioare pe peretii laterali (urmaresc y)
+// culoare albastra pentru resorturile Ox
+g.fillStyle=C.blue;
+g.fillRect(CX-WALL-6,py-9,12,18);
+g.fillRect(CX+WALL-6,py-9,12,18);
+// carucioare pe peretii sus/jos (urmaresc x)
+// culoare portocalie pentru resorturile Oy
+g.fillStyle=C.amber;
+g.fillRect(px-9,CY-WALL-6,18,12);
+g.fillRect(px-9,CY+WALL-6,18,12);
+// resorturi
+spring(g, CX-WALL, py, px-R, py, C.blue);
+spring(g, px+R, py, CX+WALL, py, C.blue);
+spring(g, px, CY-WALL, px, py-R, C.amber);
+spring(g, px, py+R, px, CY+WALL, C.amber);
+
+// urma (ultima perioada, estompata)
+const L = 0.9*T, SEG = 90;
+g.lineWidth=3.2; g.lineCap='round';
+const base = C.ink.length===7 ? C.ink : '#16202B';
+for(let i=0;i<SEG;i++){
+const a = state.t - L*(1 - i/SEG), b = state.t - L*(1 - (i+1)/SEG);
+const qa=pos(a), qb=pos(b);
+g.strokeStyle = hexToRgba(base, Math.pow((i+1)/SEG,1.6));
+g.beginPath(); g.moveTo(CX+qa.x*SC, CY-qa.y*SC); g.lineTo(CX+qb.x*SC, CY-qb.y*SC); g.stroke();
+}
+// punctul material
+g.beginPath(); g.arc(px,py,R,0,Math.PI*2);
+g.fillStyle=C.teal; g.fill();
+g.lineWidth=2; g.strokeStyle=C.bg; g.stroke();
+g.beginPath(); g.arc(px-5,py-5,4,0,Math.PI*2);
+g.fillStyle='rgba(255,255,255,.55)'; g.fill();
+
+// litera P
+g.fillStyle=C.ink; g.font='italic 600 16px Georgia, serif';
+g.fillText('P', px+R+4, py-R-2);
+}
+
+function drawStrip(){
+s.clearRect(0,0,GW,GH);
+const mid = GH/2, amp = 52, win = 2*T, left = 28, right = GW-14;
+s.lineWidth=1; s.strokeStyle=C.line;
+s.beginPath(); s.moveTo(left,mid); s.lineTo(right,mid); s.stroke();
+s.fillStyle=C.muted; s.font='12px system-ui, sans-serif';
+s.fillText('t', right-6, mid-6);
+const series = [
+{f:t=>pos(t).x, col:C.blue},
+{f:t=>pos(t).y, col:C.amber}
+];
+series.forEach(sr=>{
+s.beginPath(); s.lineWidth=2.4; s.strokeStyle=sr.col; s.lineJoin='round';
+for(let i=0;i<=240;i++){
+const tt = state.t - win*(1 - i/240);
+const X = left + (right-left)*i/240;
+const Y = mid - sr.f(tt)*amp;
+if(i===0) s.moveTo(X,Y); else s.lineTo(X,Y);
+}
+s.stroke();
+const Yc = mid - sr.f(state.t)*amp;
+s.beginPath(); s.arc(right,Yc,4.5,0,Math.PI*2); s.fillStyle=sr.col; s.fill();
+});
+}
+function describe(){
+const d = state.deg, A1=state.A1, A2=state.A2;
+const same = Math.abs(A1-A2) < 0.001;
+const kind = document.getElementById('kind');
+let txt;
+if(d===0) txt = 'Dreaptă: prima diagonală, y = (A₂/A₁)·x';
+else if(d===180) txt = 'Dreaptă: a doua diagonală, y = −(A₂/A₁)·x';
+else if(d===90) txt = same ? 'Cerc, parcurs în sens orar' : 'Elipsă cu axele pe Ox și Oy, în sens orar';
+else if(d===270) txt = same ? 'Cerc, parcurs în sens antiorar' : 'Elipsă cu axele pe Ox și Oy, în sens antiorar';
+else txt = 'Elipsă înclinată, în sens ' + (Math.sin(d*Math.PI/180)>0 ? 'orar' : 'antiorar');
+kind.textContent = txt;
+
+const pi = (d/180);
+document.getElementById('eqxy').textContent =
+'x = ' + A1.toFixed(2) + ' sin(ωt), y = ' + A2.toFixed(2) + ' sin(ωt + ' + d + '°)';
+const c = Math.cos(d*Math.PI/180), sn = Math.sin(d*Math.PI/180);
+document.getElementById('eq5').textContent =
+'x²/A₁² + y²/A₂² − (2xy/A₁A₂)·cos Δφ = sin² Δφ cu cos Δφ = ' + c.toFixed(2) + ', sin² Δφ = ' + (sn*sn).toFixed(2);
+
+document.getElementById('a1o').textContent = A1.toFixed(2);
+document.getElementById('a2o').textContent = A2.toFixed(2);
+document.getElementById('dpo').textContent = d + '° = ' + (pi===0?'0':pi.toFixed(2)+'π');
+document.getElementById('spo').textContent = '×' + state.speed;
+}
+
+// controale
+const $ = id => document.getElementById(id);
+$('a1').addEventListener('input', e=>{state.A1=+e.target.value; describe();});
+$('a2').addEventListener('input', e=>{state.A2=+e.target.value; describe();});
+$('dp').addEventListener('input', e=>{state.deg=+e.target.value; describe();});
+$('sp').addEventListener('input', e=>{state.speed=+e.target.value; describe();});
+$('guide').addEventListener('change', e=>{state.guide=e.target.checked;});
+document.querySelectorAll('[data-deg]').forEach(b=>{
+b.addEventListener('click', ()=>{
+state.deg = +b.dataset.deg; $('dp').value = state.deg; describe();
+});
+});
+const playBtn = $('play');
+function syncPlay(){ playBtn.textContent = state.playing ? 'Pauză' : 'Pornește'; }
+playBtn.addEventListener('click', ()=>{ state.playing=!state.playing; syncPlay(); });
+$('restart').addEventListener('click', ()=>{ state.t=0; });
+syncPlay(); describe();
+
+let last = performance.now();
+function frame(now){
+const dt = Math.min((now-last)/1000, 0.05); last = now;
+if(state.playing) state.t += dt*state.speed;
+drawStage(); drawStrip();
+requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
